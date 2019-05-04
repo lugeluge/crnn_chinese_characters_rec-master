@@ -66,7 +66,7 @@ class CRNN(nn.Module):
         self.rnn = nn.Sequential(
             BidirectionalLSTM(512, nh, nh),
             BidirectionalLSTM(nh, nh, nclass))
-
+        self.linear = nn.Linear(512,nclass)
     def forward(self, input):
         # conv features
         #print('---forward propagation---')
@@ -76,9 +76,18 @@ class CRNN(nn.Module):
         assert h == 1, "the height of conv must be 1"
         conv = conv.squeeze(2) # b *512 * width  维度压缩
         conv = conv.permute(2, 0, 1)  # [w, b, c] #维度变换
-        #print(conv.size()) # width batch_size channel
-        # rnn features
-        output = self.rnn(conv)
-        #print(output.size(0))
-        # print(output.size())# width*batch_size*nclass
+
+        #修改
+        conv = conv.contiguous().view(w*b,-1)
+        output  = self.linear(conv)
+        output = output.contiguous().view(w,b,-1)
+
+        #原始
+        # #print(conv.size()) # width batch_size channel
+        # # rnn features
+        # output = self.rnn(conv)
+        # #print(output.size(0))
+        # # print(output.size())# width*batch_size*nclass
+
+
         return output
